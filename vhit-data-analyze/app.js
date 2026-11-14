@@ -25,14 +25,14 @@ function scatter(ts,divisor){const pts=ts.filter(t=>t.left_gain_vor!=null&&t.rig
  const stride=Math.max(1,Math.ceil(pts.length/2000));pts.forEach((t,i)=>{if(i%stride)return;s+=`<circle cx="${x(t.LeftAvgGain/divisor)}" cy="${y(t.RightAvgGain/divisor)}" r="2.7" fill="${t.high_gain_review?'#d48b47':'#16786b'}" fill-opacity=".4"><title>${esc(t.date)} / ${esc(t.test_type)} / L ${show(t.LeftAvgGain/divisor)} / R ${show(t.RightAvgGain/divisor)}</title></circle>`;});s+=`<text x="${w/2}" y="${h-2}" text-anchor="middle">左侧增益${divisor===1?'原值':'（无量纲）'} →</text><text x="${p.l}" y="10">右侧 ↑</text>`;el.innerHTML=`<svg role="img" aria-label="左右侧增益散点图" viewBox="0 0 ${w} ${h}">${s}</svg>`;
 }
 function overview(){const o=overviewStats;
- $('kpis').innerHTML=kpi('去重检查记录',fmt(o.tests),'按模块 + 检查 GUID 合并')+kpi('导出身份标识',fmt(o.identities),'同一自然人可能对应多个标识')+kpi('vHIT 检查',fmt(o.vhit_tests),`${fmt(o.vhit_impulses)} 次甩头记录`)+kpi('日期覆盖',o.first_date?o.first_date.slice(0,4)+'–'+o.last_date.slice(0,4):'—',`${fmt(o.repeated_identities)} 个身份有多项检查（含不同模块）`);
+ $('kpis').innerHTML=kpi('去重检查记录',fmt(o.tests),'按模块 + 检查 GUID 合并')+kpi('导出身份标识',fmt(o.identities),'按导出身份标识去重')+kpi('vHIT 检查',fmt(o.vhit_tests),`${fmt(o.vhit_impulses)} 次甩头记录`)+kpi('日期覆盖',o.first_date?o.first_date.slice(0,4)+'–'+o.last_date.slice(0,4):'—',`${fmt(o.repeated_identities)} 个身份有多项检查（含不同模块）`);
  const months=o.months;if(months.length){let y=Number(months[0][0].slice(0,4)),m=Number(months[0][0].slice(5)),last=months.at(-1)[0],map=new Map(months),complete=[];for(let i=0;i<1200;i++){const k=y+'-'+String(m).padStart(2,'0');if(k>last)break;complete.push([k,map.get(k)||0]);if(++m>12){m=1;y++;}}barChart('timeline',complete);}else empty('timeline');
  bars('modules',o.modules.map(([k,n])=>[names[k]||k,n]));barChart('ages',o.ages.map((n,i)=>[i===11?'110+':i*10+'–'+(i*10+9),n]),'#73a48b');
 }
 function vhit(){
  const plane=$('vhit-plane').value,ts=filtered.filter(t=>t.kind==='VW_HITest'&&(!plane||t.test_type===plane)),d=$('scaled').checked?1:100,both=ts.filter(t=>t.left_gain_vor!=null&&t.right_gain_vor!=null);
- $('vhit-kpis').innerHTML=kpi('vHIT 检查',fmt(ts.length),`${fmt(both.length)} 项双侧可分析 · ${plane||'平面合并'}`)+kpi('左方向增益中位数',show(median(both.map(t=>t.LeftAvgGain/d))),d===1?'XML 整数存储值':'VOR 增益 · 无量纲')+kpi('右方向增益中位数',show(median(both.map(t=>t.RightAvgGain/d))),d===1?'XML 整数存储值':'VOR 增益 · 无量纲')+kpi('设备未删除甩头',fmt(ts.reduce((n,t)=>n+t.active_impulses,0)),'设备保留不代表人工质控合格');
- $('gain-qc-note').textContent=`当前 ${fmt(ts.filter(t=>t.high_gain_review).length)} 项水平高增益待复核；${fmt(ts.filter(t=>t.calibration_default).length)} 项默认校准；${fmt(ts.length-both.length)} 项双侧数据不可分析。`+(!plane?' 全部平面混合仅供盘点，比较与解释应选择同一平面。':plane==='Lateral'?' 大于 1 不等同于疾病或测量错误，需结合校准、扫视和波形复核。':' 垂直平面的左右标签是导出刺激方向，不能直接套用水平双耳阈值。');
+ $('vhit-kpis').innerHTML=kpi('vHIT 检查',fmt(ts.length),`${fmt(both.length)} 项双侧可分析 · ${plane||'平面合并'}`)+kpi('左方向增益中位数',show(median(both.map(t=>t.LeftAvgGain/d))),d===1?'XML 整数存储值':'VOR 增益 · 无量纲')+kpi('右方向增益中位数',show(median(both.map(t=>t.RightAvgGain/d))),d===1?'XML 整数存储值':'VOR 增益 · 无量纲')+kpi('设备未删除甩头',fmt(ts.reduce((n,t)=>n+t.active_impulses,0)),'按设备保留状态统计');
+ $('gain-qc-note').textContent=`当前 ${fmt(ts.filter(t=>t.high_gain_review).length)} 项水平高增益待复核；${fmt(ts.filter(t=>t.calibration_default).length)} 项默认校准；${fmt(ts.length-both.length)} 项双侧数据不可分析。`+(!plane?' 可选择平面分别比较。':plane==='Lateral'?' 水平高增益按 >1.2 标记。':' 左 / 右表示导出刺激方向。');
  scatter(ts,d);histogram('gains',both.flatMap(t=>[t.LeftAvgGain/d,t.RightAvgGain/d]));
  window.SaccadePanel.render(ts);
  window.TraceWorkbench.setTests(filtered.filter(t=>t.kind==='VW_HITest'),plane);
@@ -70,13 +70,13 @@ async function renderActive(){
   if(tab==='explorer')await renderTable();
   if(tab==='quality'){const r=await window.DataClient.memo('/api/catalog',new URLSearchParams());if(token!==viewRequest)return false;D.catalog=r.catalog;$('scope').textContent='质量统计：全库 '+fmt(D.metrics.tests)+' 项';quality();}
   if(token!==viewRequest)return false;
-  $('load-status').textContent='已按需加载 · 汇总不含逐条记录，检查明细按页读取。';return true;
+  $('load-status').textContent='已加载当前筛选数据。';return true;
  }catch(error){if(token===viewRequest)$('load-status').textContent=error.message+'。可点击“刷新数据”重试。';return false;}
  finally{if(token===viewRequest)el.classList.remove('is-loading');}
 }
 async function activateTab(tab){
  activeTab=tab;document.querySelectorAll('nav button,.tab').forEach(x=>x.classList.remove('active'));document.querySelector(`nav button[data-tab="${tab}"]`).classList.add('active');$(tab).classList.add('active');
- const titles={overview:'让归档成为可探索的数据。',vhit:'从平均指标，深入每一次甩头。',relations:'从单项指标，走向关联与核验。',explorer:'每项检查，都可以追溯。',quality:'先理解数据，再解释结果。'};$('title').textContent=titles[tab];return renderActive();
+ const titles={overview:'前庭检查数据总览',vhit:'vHIT 指标与波形',relations:'指标关联分析',explorer:'检查明细',quality:'数据质量与字段字典'};$('title').textContent=titles[tab];return renderActive();
 }
 async function init(){
  await window.DataClient.bootstrap();
@@ -89,10 +89,11 @@ for(const y of D.filters.years.filter(x=>/^\d{4}$/.test(x)))$('year').add(new Op
  $('data-refresh').onclick=async()=>{window.DataClient.invalidate();window.TraceWorkbench.invalidate();try{await window.DataClient.bootstrap();$('generated').textContent='数据快照 '+D.generated.slice(0,16).replace('T',' ')+' UTC';await update();}catch(error){$('load-status').textContent=error.message;}};
  $('generated').textContent='提取视图更新 '+D.generated.slice(0,16).replace('T',' ')+' UTC';let timer;window.addEventListener('resize',()=>{clearTimeout(timer);timer=setTimeout(renderActive,180);});await update();}
 async function openTraceHash(){
+ if(location.hash==='#quality')await activateTab('quality');
  if(location.hash==='#associations'){await activateTab('relations');$('associations').scrollIntoView({block:'start'});}
  if(['#trace-workbench','#gain-saccades'].includes(location.hash)){await activateTab('vhit');$(location.hash.slice(1)).scrollIntoView({block:'start'});}
 }
 window.addEventListener('hashchange',openTraceHash);
 window.addEventListener('trace:open-test',event=>inspectWave(event.detail.key));
 window.addEventListener('trace:reset-library',()=>{['year','kind','subtype','search','flag'].forEach(id=>$(id).value='');$('cohort').value='all';update();});
-init().then(openTraceHash).catch(error=>{$('load-status').textContent=error.message+'。请先构建本地缓存后刷新。';});
+init().then(openTraceHash).catch(error=>{$('load-status').textContent=error.message+'。请刷新页面重试。';});

@@ -4,6 +4,7 @@
  async function binary(logical,wave=false){
   if(!key)throw Error('请先解锁看板');
   const id=await C.identifier(config.build,logical),path=(wave?config.wave_base:config.data_base).replace('{shard}',id[0]),url=new URL(id+'.bin',new URL(path,base));
+  if(!wave&&config.revision)url.searchParams.set('v',config.revision);
   const response=await fetch(url,{cache:'force-cache',credentials:'omit'});if(!response.ok){const error=Error('数据读取失败（'+response.status+'）');error.status=response.status;throw error;}
   return C.decrypt(key,logical,await response.arrayBuffer());
  }

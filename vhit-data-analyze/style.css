@@ -18,4 +18,6 @@
 .logout-form{margin:0}.is-loading{opacity:.5;pointer-events:none}#load-status{min-height:18px}#data-refresh{white-space:nowrap}
 .session-check body{visibility:hidden}
 
-.vault-dialog{width:min(1100px,95vw);height:90vh;border:1px solid #c9dbcf;border-radius:10px;padding:12px}.vault-dialog::backdrop{background:#183e3588}.vault-dialog>button{float:right;margin-bottom:8px}.vault-dialog iframe{width:100%;height:calc(100% - 45px);border:0}.vault-dialog form{margin:0}
+.method-note{margin:10px 0 18px;font-size:12px;color:var(--muted)}.method-note summary{width:fit-content;cursor:pointer;color:var(--green)}.method-note p{max-width:900px;margin:8px 0}.method-note a{color:var(--green)}
+
+.vault-dialog{width:min(1100px,95vw);height:90vh;border:1px solid #c9dbcf;border-radius:10px;padding:12px}.vault-dialog::backdrop{background:#183e3588}.vault-dialog>button{float:right;margin-bottom:8px}.vault-dialog iframe{width:100%;height:calc(100% - 45px);border:0}

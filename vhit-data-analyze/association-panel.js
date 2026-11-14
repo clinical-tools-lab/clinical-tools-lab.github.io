@@ -15,8 +15,8 @@
   const x=$('rel-x').value,y=$('rel-y').value,stat=cache[x+':'+y],p=M.pairs(rows,x,y),ids=new Set(p.map(r=>r.patient_key)).size;
   $('rel-preset').value=[...$('rel-preset').options].some(o=>o.value===x+':'+y)?x+':'+y:'';
   const card=(label,value,detail)=>`<div class="kpi"><div class="label">${label}</div><div class="value">${value}</div><div class="detail">${detail}</div></div>`;
-  $('rel-kpis').innerHTML=card('当前方向检查',N(rows.length),`${plane} · ${side==='left'?'左':'右'}刺激方向`)+card('所选关系有效配对',N(p.length),`${N(rows.length-p.length)} 项至少一变量缺失`)+card('有效导出身份标识',N(ids),'标识不保证自然人唯一')+card(method==='spearman'?'Spearman ρ':'Pearson r',f(stat.value),'使用全部有效配对，未由绘图样本估算');
-  $('rel-scope').textContent=`所选关系：${vars[x][0]} × ${vars[y][0]}。`+(sampling==='first'?'当前筛选内每个导出身份取最早日期的一项，同日按检查化名排序；左右方向与平面不合并。':'包含全部匹配检查，同一身份可重复出现；样本并非独立，不能按独立人作显著性推断。')+(stat.n<30?' 当前有效量不足 30，请谨慎解释。':'')+(x===y?' 当前横纵为同一变量，自相关不提供额外证据。':'');
+  $('rel-kpis').innerHTML=card('当前方向检查',N(rows.length),`${plane} · ${side==='left'?'左':'右'}刺激方向`)+card('所选关系有效配对',N(p.length),`${N(rows.length-p.length)} 项至少一变量缺失`)+card('有效导出身份标识',N(ids),'按导出身份标识去重')+card(method==='spearman'?'Spearman ρ':'Pearson r',f(stat.value),'基于全部有效配对');
+  $('rel-scope').textContent=`所选关系：${vars[x][0]} × ${vars[y][0]}。`+(sampling==='first'?'每个身份取当前筛选内最早一项，同日按检查化名排序。':'包含全部匹配检查，同一身份可有多项。')+(x===y?' 横纵轴为同一变量。':'');
   matrix();draw(p,x,y);sensitivity(x,y,method);selectedRows=p;selection='全部有效配对';list();
  }
  function matrix(){

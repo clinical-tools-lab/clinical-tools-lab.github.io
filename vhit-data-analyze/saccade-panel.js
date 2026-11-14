@@ -12,14 +12,14 @@
   result=M.summarize(tests,window.SACCADES.tests,kind,threshold);
   const s=result,total=tests.length,card=(label,value,detail)=>`<div class="kpi"><div class="label">${label}</div><div class="value">${N(value)}</div><div class="detail">${detail}</div></div>`;
   $('saccade-kpis').innerHTML=card('含隐性扫视的检查',s.covertTests,`任一方向至少一次 · / ${N(s.completeTests)} 项`)+card('含显性扫视的检查',s.overtTests,`任一方向至少一次 · / ${N(s.completeTests)} 项`)+card('两类均出现的检查',s.bothTests,'可在不同方向 / 不同甩头出现')+card('双方向增益参考内仍达扫视条件',s.referenceWithSaccades,`/ ${N(s.referenceTests)} 项双方向参考内检查`);
-  $('saccade-summary').textContent=`当前 ${N(total)} 项检查，${N(s.completeTests)} 项双方向扫视记录完整，${N(total-s.completeTests)} 项不可用于完整检查级统计。${N(s.neitherTests)} 项未检出两类扫视；${N(s.referenceTests-s.referenceWithSaccades)} 项双方向增益参考内且均未达所选扫视条件，这个组合不直接等于临床阴性。下方联合分类按同一刺激方向计算，共 ${N(s.rows.length)} 个方向；一项检查可贡献两个方向。前三张卡固定为“至少一次”，末张卡及联合分类随下方扫视条件变化。`;
+  $('saccade-summary').textContent=`检查级统计：${N(s.completeTests)} / ${N(total)} 项双方向扫视记录完整，其中 ${N(s.neitherTests)} 项未检出两类扫视。联合分类共 ${N(s.rows.length)} 个刺激方向。前三张卡统计至少一次检出，末张卡随所选扫视条件变化。`;
   const definitions=[['covert_only','仅隐性'],['overt_only','仅显性'],['both','两类都有'],['neither','均未检出'],['missing','扫视不可分析']];
   $('saccade-types').innerHTML=definitions.map(([key,label])=>`<div><span>${label}</span><strong>${N(s.typeCounts[key])}</strong><small>方向</small></div>`).join('');
   const cell=key=>`<button type="button" class="saccade-cell" data-saccade-group="${key}" aria-pressed="${selected===key}"><span>${labels[key]}</span><strong>${N(s.groups[key].length)}</strong><small>方向 · ${s.rows.length?(100*s.groups[key].length/s.rows.length).toFixed(1):'0.0'}% 的当前方向</small></button>`;
   $('saccade-matrix').innerHTML=['reference_no','reference_yes','low_no','low_yes'].map(cell).join('');
   $('saccade-extra').innerHTML=['all','high','missing'].map(key=>`<button class="quiet" type="button" data-saccade-group="${key}" aria-pressed="${selected===key}">${labels[key]} · ${N(key==='all'?s.rows.length:s.groups[key].length)}</button>`).join('');
   const pr=s.rows.map(r=>r.overall_pr).filter(Number.isFinite),cp=s.rows.map(r=>r.covert_pr).filter(Number.isFinite),op=s.rows.map(r=>r.overt_pr).filter(Number.isFinite);
-  $('saccade-pr').textContent=`有效 Overall PR：${N(pr.length)} 个方向，中位数 ${show(median(pr))}；隐性 PR：${N(cp.length)} 个方向，中位数 ${show(median(cp))}；显性 PR：${N(op.length)} 个方向，中位数 ${show(median(op))}。-1 已置缺失，真实 0 保留；分母是有效方向数，不是全部检查数。`;
+  $('saccade-pr').textContent=`有效 Overall PR：${N(pr.length)} 个方向，中位数 ${show(median(pr))}；隐性 PR：${N(cp.length)} 个方向，中位数 ${show(median(cp))}；显性 PR：${N(op.length)} 个方向，中位数 ${show(median(op))}。按有效方向统计；-1 记为缺失，0 保留。`;
   document.querySelectorAll('[data-saccade-group]').forEach(b=>b.onclick=()=>{selected=b.dataset.saccadeGroup;render(current);});
   draw();list();
  }

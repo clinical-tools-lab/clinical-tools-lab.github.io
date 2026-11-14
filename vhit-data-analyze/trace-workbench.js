@@ -174,7 +174,7 @@
       }catch(error){loaded=fallback(key);}
     }
     if(token!==request)return;loadingKey='';
-    if(!loaded){for(const id of ['trace-overlay-left','trace-overlay-right','trace-gain','trace-detail','trace-xcorr'])empty(id,'该检查的完整波形暂不可用');$('trace-status').textContent='完整波形暂不可用。请检查本地服务或网络后重试。';$('trace-retry').hidden=false;return;}
+    if(!loaded){for(const id of ['trace-overlay-left','trace-overlay-right','trace-gain','trace-detail','trace-xcorr'])empty(id,'该检查的完整波形暂不可用');$('trace-status').textContent='波形加载失败，请重试。';$('trace-retry').hidden=false;return;}
     session=loaded;selectedKey='';renderSession();
   }
   function init(){
